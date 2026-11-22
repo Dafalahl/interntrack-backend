@@ -10,9 +10,6 @@ use Exception;
 
 class ApplicationService
 {
-    /**
-     * Logika Mahasiswa Mengajukan Lamaran Magang
-     */
     public function applyForJob(User $studentUser, int $jobId): Application
     {
         $profile = $studentUser->studentProfile;
@@ -21,11 +18,12 @@ class ApplicationService
         }
 
         $job = Job::findOrFail($jobId);
+
         if ($job->status !== 'open') {
             throw new Exception("Lowongan magang ini sudah ditutup.", 400);
         }
 
-        // Pengecekan duplikasi pengajuan lamaran (HTTP 409 Conflict)
+        // Cek duplikasi (HTTP 409 Conflict)
         $alreadyApplied = Application::where('job_id', $jobId)
             ->where('student_id', $profile->id)
             ->exists();
@@ -44,9 +42,6 @@ class ApplicationService
         });
     }
 
-    /**
-     * Logika Mitra Mengubah Status Seleksi Pelamar
-     */
     public function updateApplicationStatus(Application $application, string $newStatus): Application
     {
         return DB::transaction(function () use ($application, $newStatus) {
@@ -54,7 +49,7 @@ class ApplicationService
 
             if ($newStatus === 'accepted') {
                 $job = $application->job;
-                if ($job && $job->quota > 0) {
+                if ($job->quota > 0) {
                     $job->decrement('quota');
                 }
             }
